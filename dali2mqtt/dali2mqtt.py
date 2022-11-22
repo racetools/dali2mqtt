@@ -214,6 +214,11 @@ def initialize_lamps(data_object, client):
     logger.info("initialize_lamps finished")
 
 
+def mapFromTo(x,a,b,c,d):
+   y=(x-a)/(b-a)*(d-c)+c
+   return y
+
+
 def on_detect_changes_in_config(mqtt_client):
     """Callback when changes are detected in the configuration file."""
     logger.info("Reconnecting to server")
@@ -273,7 +278,7 @@ def on_message_brightness_cmd(mqtt_client, data_object, msg):
         lamp_object = get_lamp_object(data_object, light)
 
         try:
-            lamp_object.level = int(msg.payload.decode("utf-8"))
+            lamp_object.level = int(mapFromTo(int(msg.payload.decode("utf-8")),HA_MIN_INPUT_VAL,HA_MAX_INPUT_VAL,lamp_object.min_level,lamp_object.max_level))
             if lamp_object.level == 0:
                 # 0 in DALI is turn off with fade out
                 lamp_object.off()
@@ -281,12 +286,12 @@ def on_message_brightness_cmd(mqtt_client, data_object, msg):
 
             mqtt_client.publish(
                 MQTT_STATE_TOPIC.format(data_object["base_topic"], light),
-                MQTT_PAYLOAD_ON if lamp_object.level != 0 else MQTT_PAYLOAD_OFF,
+                MQTT_PAYLOAD_ON if mapFromTo(lamp_object.level, lamp_object.min_level,lamp_object.max_level, HA_MIN_INPUT_VAL,HA_MAX_INPUT_VAL) != 0 else MQTT_PAYLOAD_OFF,
                 retain=False,
             )
             mqtt_client.publish(
                 MQTT_BRIGHTNESS_STATE_TOPIC.format(data_object["base_topic"], light),
-                lamp_object.level,
+                mapFromTo(lamp_object.level, lamp_object.min_level,lamp_object.max_level, HA_MIN_INPUT_VAL,HA_MAX_INPUT_VAL),
                 retain=True,
             )
         except ValueError as err:
