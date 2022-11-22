@@ -60,6 +60,8 @@ from dali2mqtt.consts import (
     RED_COLOR,
     TRIDONIC,
     YELLOW_COLOR,
+    HA_MIN_INPUT_VAL,
+    HA_MAX_INPUT_VAL,
 )
 
 
